@@ -1,0 +1,121 @@
+import { saveImage, appendTextFile, hasDirectoryAccess } from './fileSystem';
+import { extractText } from './ocr';
+
+let intervalId = null;
+
+const padZero = (num) => num.toString().padStart(2, '0');
+
+const getFormattedDate = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${padZero(d.getMonth() + 1)}-${padZero(d.getDate())}_${padZero(d.getHours())}-${padZero(d.getMinutes())}-${padZero(d.getSeconds())}`;
+};
+
+const isWithinSchedule = (startStr, endStr) => {
+  if (!startStr || !endStr) return true;
+  
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  
+  const [startH, startM] = startStr.split(':').map(Number);
+  const startTotal = startH * 60 + startM;
+  
+  const [endH, endM] = endStr.split(':').map(Number);
+  const endTotal = endH * 60 + endM;
+
+  if (startTotal <= endTotal) {
+    return currentMinutes >= startTotal && currentMinutes <= endTotal;
+  } else {
+    // Crosses midnight
+    return currentMinutes >= startTotal || currentMinutes <= endTotal;
+  }
+};
+
+const processZone = async (zone, videoElement) => {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  // Calculate actual pixel coordinates based on video source resolution
+  const vw = videoElement.videoWidth;
+  const vh = videoElement.videoHeight;
+  
+  const sx = (zone.x / 100) * vw;
+  const sy = (zone.y / 100) * vh;
+  const sWidth = (zone.width / 100) * vw;
+  const sHeight = (zone.height / 100) * vh;
+
+  canvas.width = sWidth;
+  canvas.height = sHeight;
+
+  // Draw the specific portion of the video onto the canvas
+  ctx.drawImage(videoElement, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
+
+  const timestamp = getFormattedDate();
+  const safeZoneName = zone.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+
+  if (zone.type === 'capture') {
+    // Save Image
+    return new Promise((resolve) => {
+      canvas.toBlob(async (blob) => {
+        if (blob) {
+          const filename = `${timestamp}_${safeZoneName}.png`;
+          await saveImage(filename, blob);
+        }
+        resolve();
+      }, 'image/png');
+    });
+  } else if (zone.type === 'decode') {
+    // OCR
+    const dataUrl = canvas.toDataURL('image/png');
+    const text = await extractText(dataUrl);
+    if (text) {
+      const filename = `${timestamp}_${safeZoneName}.txt`;
+      await appendTextFile(filename, text);
+    }
+  }
+};
+
+export const startEngine = ({ videoElement, zones, frequencySec, startTime, endTime, onFinish }) => {
+  if (intervalId) return false;
+  if (!hasDirectoryAccess()) {
+    alert("Veuillez sélectionner un dossier de destination d'abord.");
+    return false;
+  }
+  if (!videoElement || !videoElement.videoWidth) {
+    alert("Veuillez sélectionner l'écran à capturer.");
+    return false;
+  }
+
+  console.log("Démarrage du moteur de capture...");
+
+  const loop = async () => {
+    if (isWithinSchedule(startTime, endTime)) {
+      console.log(`Exécution de l'analyse à ${new Date().toLocaleTimeString()}...`);
+      for (const zone of zones) {
+        try {
+          await processZone(zone, videoElement);
+        } catch (error) {
+          console.error(`Erreur lors du traitement de la zone ${zone.name}:`, error);
+        }
+      }
+    } else {
+      console.log("En dehors des horaires définis. Arrêt automatique.");
+      stopEngine();
+      if (onFinish) onFinish();
+    }
+  };
+
+  // Run immediately first time
+  loop();
+  
+  // Then start interval
+  intervalId = setInterval(loop, frequencySec * 1000);
+  return true;
+};
+
+export const stopEngine = () => {
+  if (intervalId) {
+    clearInterval(intervalId);
+    intervalId = null;
+    console.log("Moteur de capture arrêté.");
+  }
+};

@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import './styles/design-tokens.css';
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden; /* Prevent scrolling on main app view */
+}
+
+#root {
+  display: flex;
+  flex: 1;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* Glass panel utility */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--radius-lg);
+}
+
+/* Base button styles */
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  transition: all 0.2s ease;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-2) var(--spacing-4);
+}
+
+button.primary {
+  background-color: var(--accent-primary);
+  color: white;
+}
+
+button.primary:hover {
+  background-color: var(--accent-primary-hover);
+  transform: translateY(-1px);
+}
+
+button.secondary {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border);
+}
+
+button.secondary:hover {
+  background-color: var(--bg-panel);
+}
+
+/* Inputs */
+input, select {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-2) var(--spacing-3);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  transition: border-color 0.2s ease;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary); 
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-panel-border); 
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted); 
+}
