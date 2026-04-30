@@ -1,4 +1,4 @@
-import { saveImage, updateJsonLog, hasDirectoryAccess } from './fileSystem';
+import { saveImage, updateJsonLog, hasDirectoryAccess, createSessionDirectory } from './fileSystem';
 import { extractText } from './ocr';
 
 let timeoutId = null;
@@ -72,7 +72,7 @@ const processZone = async (zone, videoElement) => {
   }
 };
 
-export const startEngine = ({ videoElement, zones, frequencySec, startTime, endTime, onFinish }) => {
+export const startEngine = async ({ videoElement, zones, frequencySec, startTime, endTime, onFinish }) => {
   if (isEngineRunning) return false;
   if (!hasDirectoryAccess()) {
     alert("Veuillez sélectionner un dossier de destination d'abord.");
@@ -83,8 +83,22 @@ export const startEngine = ({ videoElement, zones, frequencySec, startTime, endT
     return false;
   }
 
+  if (!isWithinSchedule(startTime, endTime)) {
+    alert("L'heure actuelle est en dehors de la plage horaire définie. Démarrage annulé.");
+    return false;
+  }
+
   isEngineRunning = true;
   console.log("Démarrage du moteur de capture...");
+
+  const timestamp = getFormattedDate();
+  const sessionFolderName = `Session_${timestamp}`;
+  const success = await createSessionDirectory(sessionFolderName);
+  if (!success) {
+    alert("Impossible de créer le dossier de session.");
+    isEngineRunning = false;
+    return false;
+  }
 
   const loop = async () => {
     if (!isEngineRunning) return;

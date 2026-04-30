@@ -5,6 +5,7 @@
  */
 
 let targetDirectoryHandle = null;
+let currentSessionDirectoryHandle = null;
 
 export const requestDirectoryAccess = async () => {
   try {
@@ -24,14 +25,26 @@ export const hasDirectoryAccess = () => {
   return targetDirectoryHandle !== null;
 };
 
+export const createSessionDirectory = async (folderName) => {
+  if (!targetDirectoryHandle) return false;
+  try {
+    currentSessionDirectoryHandle = await targetDirectoryHandle.getDirectoryHandle(folderName, { create: true });
+    return true;
+  } catch (error) {
+    console.error("Erreur lors de la création du sous-dossier:", error);
+    return false;
+  }
+};
+
 /**
  * Saves a Blob (image) to the selected directory
  */
 export const saveImage = async (filename, blob) => {
-  if (!targetDirectoryHandle) throw new Error("Dossier non défini");
+  const dirHandle = currentSessionDirectoryHandle || targetDirectoryHandle;
+  if (!dirHandle) throw new Error("Dossier non défini");
   
   try {
-    const fileHandle = await targetDirectoryHandle.getFileHandle(filename, { create: true });
+    const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
     const writable = await fileHandle.createWritable();
     await writable.write(blob);
     await writable.close();
@@ -46,10 +59,11 @@ export const saveImage = async (filename, blob) => {
  * Appends a JSON tick object to the JSON file
  */
 export const updateJsonLog = async (filename, tickData) => {
-  if (!targetDirectoryHandle) throw new Error("Dossier non défini");
+  const dirHandle = currentSessionDirectoryHandle || targetDirectoryHandle;
+  if (!dirHandle) throw new Error("Dossier non défini");
   
   try {
-    const fileHandle = await targetDirectoryHandle.getFileHandle(filename, { create: true });
+    const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
     
     let currentData = [];
     try {

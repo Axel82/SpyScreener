@@ -5,11 +5,13 @@ import ZoneList from './components/ZoneList';
 import { requestDirectoryAccess } from './core/fileSystem';
 import { startEngine, stopEngine } from './core/engine';
 import { Play, FolderOpen } from 'lucide-react';
+import { version } from '../package.json';
 
 function App() {
   const [zones, setZones] = useState([]);
   const [outputFolder, setOutputFolder] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [useSchedule, setUseSchedule] = useState(false);
   const [startTime, setStartTime] = useState('08:00');
   const [endTime, setEndTime] = useState('18:00');
   const [frequency, setFrequency] = useState(10);
@@ -34,17 +36,17 @@ function App() {
     }
   };
 
-  const toggleEngine = () => {
+  const toggleEngine = async () => {
     if (isRunning) {
       stopEngine();
       setIsRunning(false);
     } else {
-      const success = startEngine({
+      const success = await startEngine({
         videoElement: videoRef.current,
         zones,
         frequencySec: frequency,
-        startTime,
-        endTime,
+        startTime: useSchedule ? startTime : null,
+        endTime: useSchedule ? endTime : null,
         onFinish: () => setIsRunning(false)
       });
       if (success) {
@@ -73,8 +75,9 @@ function App() {
 
       {/* Right side: Settings Panel */}
       <div className="glass-panel" style={{ width: '350px', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)' }}>
+        <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <h2 style={{ fontSize: 'var(--font-size-md)', fontWeight: 600 }}>Configuration</h2>
+          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>v{version}</span>
         </div>
         
         <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem', minHeight: 0, overflow: 'hidden' }}>
@@ -92,12 +95,17 @@ function App() {
 
             {/* Schedule Settings */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-               <label style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>Horaires d'activité</label>
-               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} disabled={isRunning} style={{ flex: 1 }} />
-                  <span style={{ color: 'var(--text-muted)' }}>à</span>
-                  <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} disabled={isRunning} style={{ flex: 1 }} />
+               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input type="checkbox" id="useSchedule" checked={useSchedule} onChange={e => setUseSchedule(e.target.checked)} disabled={isRunning} />
+                  <label htmlFor="useSchedule" style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', cursor: 'pointer' }}>Utiliser une plage horaire</label>
                </div>
+               {useSchedule && (
+                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.25rem' }}>
+                    <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} disabled={isRunning} style={{ flex: 1 }} />
+                    <span style={{ color: 'var(--text-muted)' }}>à</span>
+                    <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} disabled={isRunning} style={{ flex: 1 }} />
+                 </div>
+               )}
             </div>
 
             {/* Frequency Settings */}
