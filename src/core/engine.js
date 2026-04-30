@@ -1,7 +1,8 @@
 import { saveImage, updateJsonLog, hasDirectoryAccess } from './fileSystem';
 import { extractText } from './ocr';
 
-let intervalId = null;
+let timeoutId = null;
+let isEngineRunning = false;
 
 const padZero = (num) => num.toString().padStart(2, '0');
 
@@ -72,7 +73,7 @@ const processZone = async (zone, videoElement) => {
 };
 
 export const startEngine = ({ videoElement, zones, frequencySec, startTime, endTime, onFinish }) => {
-  if (intervalId) return false;
+  if (isEngineRunning) return false;
   if (!hasDirectoryAccess()) {
     alert("Veuillez sélectionner un dossier de destination d'abord.");
     return false;
@@ -82,9 +83,12 @@ export const startEngine = ({ videoElement, zones, frequencySec, startTime, endT
     return false;
   }
 
+  isEngineRunning = true;
   console.log("Démarrage du moteur de capture...");
 
   const loop = async () => {
+    if (!isEngineRunning) return;
+
     if (isWithinSchedule(startTime, endTime)) {
       console.log(`Exécution de l'analyse à ${new Date().toLocaleTimeString()}...`);
       
@@ -115,6 +119,11 @@ export const startEngine = ({ videoElement, zones, frequencySec, startTime, endT
         await updateJsonLog(jsonFilename, tickData);
       }
 
+      // Schedule next execution ONLY after current one is fully completed
+      if (isEngineRunning) {
+        timeoutId = setTimeout(loop, frequencySec * 1000);
+      }
+
     } else {
       console.log("En dehors des horaires définis. Arrêt automatique.");
       stopEngine();
@@ -125,15 +134,14 @@ export const startEngine = ({ videoElement, zones, frequencySec, startTime, endT
   // Run immediately first time
   loop();
   
-  // Then start interval
-  intervalId = setInterval(loop, frequencySec * 1000);
   return true;
 };
 
 export const stopEngine = () => {
-  if (intervalId) {
-    clearInterval(intervalId);
-    intervalId = null;
-    console.log("Moteur de capture arrêté.");
+  isEngineRunning = false;
+  if (timeoutId) {
+    clearTimeout(timeoutId);
+    timeoutId = null;
   }
+  console.log("Moteur de capture arrêté.");
 };

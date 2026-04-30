@@ -64,6 +64,10 @@ function App() {
           onUpdateZone={handleUpdateZone}
           onDeleteZone={handleDeleteZone}
           videoRef={videoRef}
+          onStreamEnd={() => {
+            stopEngine();
+            setIsRunning(false);
+          }}
         />
       </div>
 
@@ -73,35 +77,38 @@ function App() {
           <h2 style={{ fontSize: 'var(--font-size-md)', fontWeight: 600 }}>Configuration</h2>
         </div>
         
-        <div style={{ padding: '1rem', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem', minHeight: 0, overflow: 'hidden' }}>
           
-          {/* Output Folder Settings */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>Dossier de destination</label>
-            <button className="secondary" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={handleSelectFolder}>
-              <FolderOpen size={16} /> 
-              {outputFolder ? outputFolder : "Choisir un dossier..."}
-            </button>
+          {/* Static Config Part (Scrollable if needed, but we prefer grouping) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* Output Folder Settings */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>Dossier de destination</label>
+              <button className="secondary" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={handleSelectFolder}>
+                <FolderOpen size={16} /> 
+                {outputFolder ? outputFolder : "Choisir un dossier..."}
+              </button>
+            </div>
+
+            {/* Schedule Settings */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+               <label style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>Horaires d'activité</label>
+               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} disabled={isRunning} style={{ flex: 1 }} />
+                  <span style={{ color: 'var(--text-muted)' }}>à</span>
+                  <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} disabled={isRunning} style={{ flex: 1 }} />
+               </div>
+            </div>
+
+            {/* Frequency Settings */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>Fréquence de capture (sec)</label>
+              <input type="number" value={frequency} onChange={e => setFrequency(parseInt(e.target.value) || 1)} min="1" disabled={isRunning} />
+            </div>
           </div>
 
-          {/* Schedule Settings */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-             <label style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>Horaires d'activité</label>
-             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} disabled={isRunning} style={{ flex: 1 }} />
-                <span style={{ color: 'var(--text-muted)' }}>à</span>
-                <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} disabled={isRunning} style={{ flex: 1 }} />
-             </div>
-          </div>
-
-          {/* Frequency Settings */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>Fréquence de capture (sec)</label>
-            <input type="number" value={frequency} onChange={e => setFrequency(parseInt(e.target.value) || 1)} min="1" disabled={isRunning} />
-          </div>
-
-          {/* Zone List */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+          {/* Zone List - This part will scroll */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, minHeight: 0 }}>
             <label style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
               Zones définies ({zones.length})
             </label>
@@ -113,17 +120,17 @@ function App() {
               />
             </div>
           </div>
+        </div>
 
-          {/* Start Engine Button */}
-          <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--glass-border)' }}>
-             <button 
-                className={isRunning ? "secondary" : "primary"} 
-                style={{ width: '100%', padding: '1rem', fontSize: 'var(--font-size-md)', ...(isRunning ? { color: 'var(--danger)', borderColor: 'var(--danger)' } : {}) }}
-                onClick={toggleEngine}
-             >
-               {isRunning ? "⏹ Arrêter l'analyse" : <><Play size={18} fill="currentColor" /> Démarrer l'analyse</>}
-             </button>
-          </div>
+        {/* Start Engine Button - Fixed at bottom */}
+        <div style={{ padding: '1rem', borderTop: '1px solid var(--glass-border)', backgroundColor: 'rgba(30, 41, 59, 0.4)' }}>
+           <button 
+              className={isRunning ? "secondary" : "primary"} 
+              style={{ width: '100%', padding: '1rem', fontSize: 'var(--font-size-md)', ...(isRunning ? { color: 'var(--danger)', borderColor: 'var(--danger)' } : {}) }}
+              onClick={toggleEngine}
+           >
+             {isRunning ? "⏹ Arrêter l'analyse" : <><Play size={18} fill="currentColor" /> Démarrer l'analyse</>}
+           </button>
         </div>
       </div>
     </div>

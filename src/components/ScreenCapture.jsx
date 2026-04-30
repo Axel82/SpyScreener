@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { MonitorPlay, StopCircle } from 'lucide-react';
 
-const ScreenCapture = ({ zones, onAddZone, onUpdateZone, onDeleteZone, videoRef }) => {
+const ScreenCapture = ({ zones, onAddZone, onUpdateZone, onDeleteZone, videoRef, onStreamEnd }) => {
   const [stream, setStream] = useState(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
@@ -23,6 +23,7 @@ const ScreenCapture = ({ zones, onAddZone, onUpdateZone, onDeleteZone, videoRef 
 
       mediaStream.getVideoTracks()[0].onended = () => {
         stopCapture();
+        if (onStreamEnd) onStreamEnd();
       };
     } catch (err) {
       console.error("Erreur de capture d'écran:", err);
