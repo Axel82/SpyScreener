@@ -72,7 +72,7 @@ function App() {
       </div>
 
       {/* Right side: Settings Panel */}
-      <div className="glass-panel" style={{ width: '350px', display: 'flex', flexDirection: 'column' }}>
+      <div className="glass-panel" style={{ width: '350px', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
         <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)' }}>
           <h2 style={{ fontSize: 'var(--font-size-md)', fontWeight: 600 }}>Configuration</h2>
         </div>
