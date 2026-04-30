@@ -1,4 +1,4 @@
-import { saveImage, appendTextFile, hasDirectoryAccess } from './fileSystem';
+import { saveImage, updateJsonLog, hasDirectoryAccess } from './fileSystem';
 import { extractText } from './ocr';
 
 let intervalId = null;
@@ -60,17 +60,14 @@ const processZone = async (zone, videoElement) => {
           const filename = `${timestamp}_${safeZoneName}.png`;
           await saveImage(filename, blob);
         }
-        resolve();
+        resolve(null);
       }, 'image/png');
     });
   } else if (zone.type === 'decode') {
     // OCR
     const dataUrl = canvas.toDataURL('image/png');
     const text = await extractText(dataUrl);
-    if (text) {
-      const filename = `${timestamp}_${safeZoneName}.txt`;
-      await appendTextFile(filename, text);
-    }
+    return text;
   }
 };
 
@@ -90,13 +87,34 @@ export const startEngine = ({ videoElement, zones, frequencySec, startTime, endT
   const loop = async () => {
     if (isWithinSchedule(startTime, endTime)) {
       console.log(`Exécution de l'analyse à ${new Date().toLocaleTimeString()}...`);
+      
+      const tickData = {
+        time: new Date().toISOString(),
+        zones: []
+      };
+
       for (const zone of zones) {
         try {
-          await processZone(zone, videoElement);
+          const result = await processZone(zone, videoElement);
+          if (zone.type === 'decode' && result) {
+            tickData.zones.push({
+              id: zone.id,
+              name: zone.name,
+              content: result
+            });
+          }
         } catch (error) {
           console.error(`Erreur lors du traitement de la zone ${zone.name}:`, error);
         }
       }
+
+      if (tickData.zones.length > 0) {
+        // Group all decoded zones in a daily JSON file
+        const d = new Date();
+        const jsonFilename = `decodes_${d.getFullYear()}-${padZero(d.getMonth() + 1)}-${padZero(d.getDate())}.json`;
+        await updateJsonLog(jsonFilename, tickData);
+      }
+
     } else {
       console.log("En dehors des horaires définis. Arrêt automatique.");
       stopEngine();

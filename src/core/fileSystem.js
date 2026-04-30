@@ -43,23 +43,33 @@ export const saveImage = async (filename, blob) => {
 };
 
 /**
- * Saves or appends text to a file in the selected directory
+ * Appends a JSON tick object to the JSON file
  */
-export const appendTextFile = async (filename, text) => {
+export const updateJsonLog = async (filename, tickData) => {
   if (!targetDirectoryHandle) throw new Error("Dossier non défini");
   
   try {
     const fileHandle = await targetDirectoryHandle.getFileHandle(filename, { create: true });
     
-    // Simplification for the browser API (real append requires more work, 
-    // here we might just read, append, write or write individual files per capture)
-    // For now, let's just write/overwrite to keep it simple, or save as JSON/Logs.
+    let currentData = [];
+    try {
+      const file = await fileHandle.getFile();
+      const text = await file.text();
+      if (text) {
+        currentData = JSON.parse(text);
+      }
+    } catch (e) {
+      // Le fichier est vide ou invalide, on part sur un tableau vide
+    }
+    
+    currentData.push(tickData);
+    
     const writable = await fileHandle.createWritable();
-    await writable.write(text);
+    await writable.write(JSON.stringify(currentData, null, 2));
     await writable.close();
     return true;
   } catch (error) {
-    console.error("Erreur de sauvegarde de texte:", error);
+    console.error("Erreur de sauvegarde JSON:", error);
     return false;
   }
 };

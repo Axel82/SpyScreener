@@ -7,7 +7,7 @@ SpyScreener est une application web locale moderne permettant de définir des zo
 - **Aperçu en direct** : Sélectionnez votre écran (ou une fenêtre spécifique) et visualisez le flux vidéo en temps réel.
 - **Zones personnalisables** : Dessinez directement sur la vidéo pour définir vos zones d'intérêt. L'application respecte les proportions exactes de l'écran capturé.
 - **Capture d'image** : Enregistrez automatiquement la portion d'écran sélectionnée sous forme d'image (`.png`).
-- **Décodage de texte (OCR)** : Extrayez automatiquement le texte contenu dans une zone grâce à Tesseract.js et enregistrez-le dans un fichier texte (`.txt`).
+- **Décodage de texte (OCR)** : Extrayez automatiquement le texte contenu dans une ou plusieurs zones grâce à Tesseract.js. Les résultats sont regroupés pour chaque analyse (tick) et sauvegardés dans un unique fichier `.json`.
 - **Sauvegarde locale transparente** : Utilise l'API *File System Access* pour enregistrer silencieusement les données dans le dossier de votre choix, sans backend ni serveur externe.
 - **Moteur de planification** : Définissez vos horaires d'activité et la fréquence de capture (en secondes). Le moteur s'arrête automatiquement en dehors des plages horaires.
 
